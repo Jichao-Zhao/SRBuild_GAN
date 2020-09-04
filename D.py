@@ -16,6 +16,7 @@ class D(nn.Module):
         self.pool3 = nn.MaxPool2d(2, 2)
         self.conv5 = nn.Conv2d(128, 256, 4, 1)
         self.conv6 = nn.Conv2d(128, 3, 1, 1)
+
     def forward(self, x):
         x = self.conv1(x)
         x = F.relu(x)

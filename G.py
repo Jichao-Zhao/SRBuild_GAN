@@ -50,8 +50,10 @@ class G(nn.Module):
 
 
 GNet = G()
-torch.save(GNet, 'GNetAll.pth')
-torch.save(GNet.state_dict(), 'GNet.pth')
+
+# # 保存模型
+# torch.save(GNet, 'GNetAll.pth')
+# torch.save(GNet.state_dict(), 'GNet.pth')
 
 print(GNet)
 
