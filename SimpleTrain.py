@@ -16,14 +16,13 @@
 # 其中，原图为 (360,480)，裁剪为 (352,480)。因为 352 可以被之后的下采样整除。
 
 BATCH_SIZE = 4
-EPOCH_NUMBER = 2
+EPOCH_NUMBER = 20
 TRAIN_ROOT = "/home/jichao/gitRes/Datasets/DIV2K/train"
 TRAIN_LABEL = "/home/jichao/gitRes/Datasets/DIV2K/label"
 VAL_ROOT = './CamVid/val'
 VAL_LABEL = './CamVid/val_labels'
 TEST_ROOT = './CamVid/test'
 TEST_LABEL = './CamVid/test_labels'
-class_dict_path = './CamVid/class_dict.csv'
 crop_size = (768, 768)
 # ''''''''''''''''''''''''''''''cfg''''''''''''''''''''''''''''''
 
@@ -93,7 +92,7 @@ class DIV2KDataset(data.Dataset):
     def center_crop(self, data, label, crop_size):
         """裁剪输入的图片和标签大小"""
         data = ff.center_crop(data, crop_size)
-        label = ff.center_crop(label, (2284, 2284))
+        label = ff.center_crop(label, (1523, 1523))
         return data, label
 
     def img_transform(self, img, label):
@@ -138,7 +137,7 @@ class AnNet(nn.Module):
         super(AnNet, self).__init__()
         self.conv1 = nn.Conv2d(3,  64, 5, 1, 0)
         self.conv2 = nn.Conv2d(64, 32, 3, 1, 0)
-        self.conv3 = nn.ConvTranspose2d(32, 3,  9, 3, 4)
+        self.conv3 = nn.ConvTranspose2d(32, 3,  9, 2, 4)
 
     def forward(self, x):
         x = self.conv1(x)
@@ -156,8 +155,7 @@ AnNet = AnNet.to(device=device)
 
 optimizer = optim.Adam(AnNet.parameters(), lr=0.001)
 criterion = nn.MSELoss()
-batch_size = 4
-num_epoch = 10
+
 
 train_trans = transforms.Compose([
     transforms.CenterCrop(1536/2), # 中心位置切割
@@ -178,14 +176,15 @@ train_Loader = data.DataLoader(train_Data, batch_size=BATCH_SIZE, shuffle=False,
 
 
 # 4. 训练模型
-for epoch in range(num_epoch):
+starttime = datetime.now() # 开始计时
+
+for epoch in range(EPOCH_NUMBER):
     print("开始第 %d 轮训练"%(epoch+1))
-    # AnNet.train(0)
+
     train_loss = 0.0
+    
 
     for i_batch, sample in enumerate(train_Loader):
-        print("开始第 %d 个 batch 训练"%(i_batch+1))
-        starttime = datetime.now() # 开始计时
 
         img = sample["img"].to(device)
         label = sample["label"].to(device)
@@ -199,18 +198,26 @@ for epoch in range(num_epoch):
         optimizer.step()
 
         train_loss += loss.item()
+        
+        print('epoch{}|batch[{}/{}]|batch_loss {:.8f}|'.format(epoch+1, i_batch+1, len(train_Data)/BATCH_SIZE, loss.item()))
 
-        endtime = datetime.now() # 结束计时
+        if i_batch%100 == 99:
+            # 保存原图结果
+            img_Save_Name = "img" + str(epoch+1) + "_" + str(i_batch+1) + ".jpg"
+            utils.save_image(img, img_Save_Name)
+            # 保存预测结果
+            pred_Save_Name = "pred" + str(epoch+1) + "_" + str(i_batch+1) + ".jpg"
+            utils.save_image(pred, pred_Save_Name)
+            # 保存标签结果
+            label_Save_Name = "label_" + str(epoch+1) + "_" + str(i_batch+1) + ".jpg"
+            utils.save_image(label, label_Save_Name)
 
-        # 保存原图结果
-        img_Save_Name = "img" + str(i_batch+1) + ".jpg"
-        utils.save_image(img, img_Save_Name)
-        # 保存训练结果
-        pred_Save_Name = "pred" + str(i_batch+1) + ".jpg"
-        utils.save_image(pred, pred_Save_Name)
-        # 打印运行时间
-        print("RunTime: {}h-{}m-{}s-{}ms".format(endtime.hour-starttime.hour, endtime.minute-starttime.minute, endtime.second-starttime.second, (endtime.microsecond-starttime.microsecond)/1000))
-        print('|batch[{}/{}]|batch_loss {:.8f}|'.format(i_batch+1, len(train_Data), loss.item()))
+    endtime = datetime.now() # 结束计时
+    # 打印运行时间
+    print("RunTime: {}h-{}m-{}s".format(endtime.hour-starttime.hour, endtime.minute-starttime.minute, endtime.second-starttime.second))
+
+# torch.save(AnNet, "AnNet.pth")
+torch.save(AnNet.state_dict(), "static_dict.pth")
 
 
 
