@@ -13,18 +13,32 @@
 
 # ''''''''''''''''''''''''''''''cfg''''''''''''''''''''''''''''''
 # 配置函数，包含各种训练参数的配置
-# 其中，原图为 (360,480)，裁剪为 (352,480)。因为 352 可以被之后的下采样整除。
 
 BATCH_SIZE = 4
-EPOCH_NUMBER = 20
+EPOCH_NUMBER = 1
 TRAIN_ROOT = "/home/jichao/gitRes/Datasets/DIV2K/train"
 TRAIN_LABEL = "/home/jichao/gitRes/Datasets/DIV2K/label"
-VAL_ROOT = './CamVid/val'
-VAL_LABEL = './CamVid/val_labels'
-TEST_ROOT = './CamVid/test'
-TEST_LABEL = './CamVid/test_labels'
-crop_size = (768, 768)
+VAL_ROOT = ""
+VAL_LABEL = ""
+TEST_ROOT = ""
+TEST_LABEL = ""
+crop_size_img = (768, 768)
+crop_size_label = (1523, 1523)
 # ''''''''''''''''''''''''''''''cfg''''''''''''''''''''''''''''''
+
+
+# 1. 导入所需的包
+import os
+import numpy as np
+from PIL import Image
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import torch.optim as optim
+from torch.utils import data
+from torchvision import transforms, datasets, utils
+import torchvision.transforms.functional as ff
+from datetime import datetime
 
 
 # ''''''''''''''''''''''''''''''dataset.py''''''''''''''''''''''''''''''
@@ -34,22 +48,10 @@ crop_size = (768, 768)
 # 3. 可视化编码过程
 # 4. 定义预处理类
 
-"""补充内容见 data process and load.ipynb"""
-import os
-import numpy as np
-from PIL import Image
-import torch
-from torch.utils import data
-from torchvision import transforms, datasets, utils
-import torchvision.transforms.functional as ff
-
-
-# 
 # 图片数据集处理
 # return：img，label
-# 
 class DIV2KDataset(data.Dataset):
-    def __init__(self, file_path=[], crop_size=None):
+    def __init__(self, file_path=[], crop_size_img=None, crop_size_label=None):
         """para:
             file_path(list): 数据和标签路径,列表元素第一个为图片路径，第二个为标签路径
         """
@@ -62,7 +64,8 @@ class DIV2KDataset(data.Dataset):
         self.imgs = self.read_file(self.img_path)
         self.labels = self.read_file(self.label_path)
         # 3 初始化数据处理函数设置
-        self.crop_size = crop_size
+        self.crop_size_img = crop_size_img
+        self.crop_size_label = crop_size_label
 
     def __getitem__(self, index):
         img = self.imgs[index]
@@ -71,7 +74,7 @@ class DIV2KDataset(data.Dataset):
         img = Image.open(img)
         label = Image.open(label)
 
-        img, label = self.center_crop(img, label, self.crop_size)
+        img, label = self.center_crop(img, label, crop_size_img, crop_size_label)
 
         img, label = self.img_transform(img, label)
         # print('处理后的图片和标签大小：',img.shape, label.shape)
@@ -89,10 +92,10 @@ class DIV2KDataset(data.Dataset):
         file_path_list.sort()
         return file_path_list
 
-    def center_crop(self, data, label, crop_size):
+    def center_crop(self, data, label, crop_size_img, crop_size_label):
         """裁剪输入的图片和标签大小"""
-        data = ff.center_crop(data, crop_size)
-        label = ff.center_crop(label, (1523, 1523))
+        data = ff.center_crop(data, crop_size_img)
+        label = ff.center_crop(label, crop_size_label)
         return data, label
 
     def img_transform(self, img, label):
@@ -108,26 +111,6 @@ class DIV2KDataset(data.Dataset):
 
         return img, label
 # ''''''''''''''''''''''''''''''dataset.py''''''''''''''''''''''''''''''
-
-
-# 1. 导入所需的包
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import torch.optim as optim
-# ImageFolder 
-# from torch.utils import data
-# from torchvision import transforms, datasets, utils
-
-from datetime import datetime
-
-'''
-# 路径记录
-# 此路径为 X2 倍训练集路径
-Path_Train_LR_bicubic = "/home/jichao/gitRes/Datasets/DIV2K/train"
-Path_Train_HR = "/home/jichao/gitRes/Datasets/DIV2K/label"
-
-'''
 
 
 # 2. 构建网络结构
@@ -156,22 +139,7 @@ AnNet = AnNet.to(device=device)
 optimizer = optim.Adam(AnNet.parameters(), lr=0.001)
 criterion = nn.MSELoss()
 
-
-train_trans = transforms.Compose([
-    transforms.CenterCrop(1536/2), # 中心位置切割
-    transforms.ToTensor(),])
-label_trans = transforms.Compose([
-    transforms.CenterCrop(1536), # 中心位置切割
-    transforms.ToTensor(),])
-
-# 数据导入时不可随机，否则 train 和 label 将会不匹配
-# train_data = datasets.ImageFolder("/home/jichao/gitRes/Datasets/DIV2K/train", transform=train_trans)
-# train_loader = data.DataLoader(train_data, batch_size=batch_size, shuffle=False)
-
-# label_data = datasets.ImageFolder("/home/jichao/gitRes/Datasets/DIV2K/label", transform=label_trans)
-# label_loader = data.DataLoader(label_data, batch_size=batch_size, shuffle=False)
-
-train_Data = DIV2KDataset([TRAIN_ROOT, TRAIN_LABEL], crop_size)
+train_Data = DIV2KDataset([TRAIN_ROOT, TRAIN_LABEL], crop_size_img, crop_size_label)
 train_Loader = data.DataLoader(train_Data, batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
 
 
@@ -203,13 +171,13 @@ for epoch in range(EPOCH_NUMBER):
 
         if i_batch%100 == 99:
             # 保存原图结果
-            img_Save_Name = "img" + str(epoch+1) + "_" + str(i_batch+1) + ".jpg"
+            img_Save_Name = "img_Epoch" + str(epoch+1) + "_Batch" + str(i_batch+1) + ".jpg"
             utils.save_image(img, img_Save_Name)
             # 保存预测结果
-            pred_Save_Name = "pred" + str(epoch+1) + "_" + str(i_batch+1) + ".jpg"
+            pred_Save_Name = "pred_Epoch" + str(epoch+1) + "_Batch" + str(i_batch+1) + ".jpg"
             utils.save_image(pred, pred_Save_Name)
             # 保存标签结果
-            label_Save_Name = "label_" + str(epoch+1) + "_" + str(i_batch+1) + ".jpg"
+            label_Save_Name = "label_Epoch" + str(epoch+1) + "_Batch" + str(i_batch+1) + ".jpg"
             utils.save_image(label, label_Save_Name)
 
     endtime = datetime.now() # 结束计时
@@ -217,7 +185,7 @@ for epoch in range(EPOCH_NUMBER):
     print("RunTime: {}h-{}m-{}s".format(endtime.hour-starttime.hour, endtime.minute-starttime.minute, endtime.second-starttime.second))
 
 # torch.save(AnNet, "AnNet.pth")
-torch.save(AnNet.state_dict(), "static_dict.pth")
+torch.save(AnNet.state_dict(), "Epoch" + str(EPOCH_NUMBER) + ".pth")
 
 
 
