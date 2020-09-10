@@ -15,7 +15,7 @@
 # 配置函数，包含各种训练参数的配置
 
 BATCH_SIZE = 4
-EPOCH_NUMBER = 1
+EPOCH_NUMBER = 5
 TRAIN_ROOT = "/home/jichao/gitRes/Datasets/DIV2K/train"
 TRAIN_LABEL = "/home/jichao/gitRes/Datasets/DIV2K/label"
 VAL_ROOT = ""
@@ -39,6 +39,7 @@ from torch.utils import data
 from torchvision import transforms, datasets, utils
 import torchvision.transforms.functional as ff
 from datetime import datetime
+from tensorboardX import SummaryWriter
 
 
 # ''''''''''''''''''''''''''''''dataset.py''''''''''''''''''''''''''''''
@@ -168,6 +169,11 @@ for epoch in range(EPOCH_NUMBER):
         train_loss += loss.item()
         
         print('epoch{}|batch[{}/{}]|batch_loss {:.8f}|'.format(epoch+1, i_batch+1, len(train_Data)/BATCH_SIZE, loss.item()))
+        
+        # 使用 TensorboardX 记录损失图像
+        with SummaryWriter() as w:
+            w.add_scalar('scalar/test', loss.item(), (i_batch+1+200*epoch) )
+            w.add_scalar('scalar/epoch', loss.item(), (i_batch+1+200*epoch) )
 
         if i_batch%100 == 99:
             # 保存原图结果
