@@ -36,6 +36,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils.data import Dataset
+from torch.utils.data import DataLoader
 from torchvision import transforms, datasets, utils
 import torchvision.transforms.functional as ff
 from datetime import datetime
@@ -141,7 +142,7 @@ optimizer = optim.Adam(AnNet.parameters(), lr=0.001)
 criterion = nn.MSELoss()
 
 train_Data = DIV2KDataset([TRAIN_ROOT, TRAIN_LABEL], crop_size_img, crop_size_label)
-train_Loader = data.DataLoader(train_Data, batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
+train_Loader = DataLoader(train_Data, batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
 
 
 # 4. 训练模型
