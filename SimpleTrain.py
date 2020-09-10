@@ -35,7 +35,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-from torch.utils import data
+from torch.utils.data import Dataset
 from torchvision import transforms, datasets, utils
 import torchvision.transforms.functional as ff
 from datetime import datetime
@@ -51,7 +51,7 @@ from tensorboardX import SummaryWriter
 
 # 图片数据集处理
 # return：img，label
-class DIV2KDataset(data.Dataset):
+class DIV2KDataset(Dataset):
     def __init__(self, file_path=[], crop_size_img=None, crop_size_label=None):
         """para:
             file_path(list): 数据和标签路径,列表元素第一个为图片路径，第二个为标签路径
