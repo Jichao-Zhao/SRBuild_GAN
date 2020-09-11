@@ -4,9 +4,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-class D(nn.Module):
+class DNet(nn.Module):
     def __init__(self):
-        super(D, self).__init__()
+        super(DNet, self).__init__()
         self.conv1 = nn.Conv2d(3, 32, 4, 2)
         self.conv2 = nn.Conv2d(32, 32, 4, 1)
         self.pool1 = nn.MaxPool2d(2, 2)
@@ -43,6 +43,5 @@ class D(nn.Module):
         x = self.conv6(x)
         x = F.sigmoid(x)
 
-DNet = D()
-print(DNet)
+
 

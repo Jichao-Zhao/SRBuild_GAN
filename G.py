@@ -5,9 +5,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-class G(nn.Module):
+class GNet(nn.Module):
     def __init__(self):
-        super(G, self).__init__()
+        super(GNet, self).__init__()
         self.shallowNet = nn.Sequential(
             nn.Conv2d(3, 64, 9, 1),
             nn.Conv2d(64, 64, 9, 1),
@@ -48,12 +48,4 @@ class G(nn.Module):
 
 
 
-
-GNet = G()
-
-# # 保存模型
-# torch.save(GNet, 'GNetAll.pth')
-# torch.save(GNet.state_dict(), 'GNet.pth')
-
-print(GNet)
 
