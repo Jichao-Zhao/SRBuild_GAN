@@ -3,7 +3,7 @@
 # 包含数据的路径
 
 
-BATCH_SIZE = 4
+BATCH_SIZE = 2
 EPOCH_NUMBER = 5
 TRAIN_DATA = "/home/jichao/gitRes/Datasets/DIV2K/TRAIN_DATA"
 TRAIN_LABEL = "/home/jichao/gitRes/Datasets/DIV2K/TRAIN_LABEL"

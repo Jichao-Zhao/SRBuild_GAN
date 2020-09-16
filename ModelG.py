@@ -24,25 +24,25 @@ class GNet(nn.Module):
         # 深层网络，16 个残差块
         self.preTrain = nn.Conv2d(3, 64, 1, 1, 0)
         self.resBlock = nn.Sequential(
-            nn.Conv2d(64, 64, 3, 1),
+            nn.Conv2d(64, 64, 3, 1, 1),
             nn.ReLU(inplace=True),
-            nn.Conv2d(64, 64, 3, 1))
+            nn.Conv2d(64, 64, 3, 1, 1))
 
         # 浅层网络，4 个卷积块
         self.shallowNet = nn.Sequential(
-            nn.Conv2d(3, 64, 9, 1),
+            nn.Conv2d(3, 64, 9, 1, 4),
             nn.ReLU(inplace=True),
-            nn.Conv2d(64, 64, 9, 1),
+            nn.Conv2d(64, 64, 9, 1, 4),
             nn.ReLU(inplace=True),
-            nn.Conv2d(64, 64, 9, 1),
+            nn.Conv2d(64, 64, 9, 1, 4),
             nn.ReLU(inplace=True),
-            nn.Conv2d(64, 64, 9, 1),
+            nn.Conv2d(64, 64, 9, 1, 4),
             nn.ReLU(inplace=True),
             )
 
         # 反卷积合并网络
-        self.DeConv1 = nn.ConvTranspose2d(128, 64, 3, 1)
-        self.DeConv2 = nn.ConvTranspose2d(128, 64, 3, 1)
+        self.DeConv1 = nn.ConvTranspose2d(64, 64, 3, 3, 33)
+        self.DeConv2 = nn.ConvTranspose2d(64, 64, 3, 3, 62)
 
         # 最后一层卷积
         self.Finally = nn.Conv2d(64, 3, 1, 1, 0)
@@ -57,28 +57,28 @@ class GNet(nn.Module):
         # 提取深层特征
         x_deep = self.preTrain(x)
         for i in range(16):
-            x_deep += self.resBlock(x_deep)
-        # x_deep0 = self.preTrain(x)
-        # x_deep1 += self.resBlock(x_deep0) + x_deep0
-        # x_deep2 += self.resBlock(x_deep1) + x_deep1
-        # x_deep3 += self.resBlock(x_deep2) + x_deep2
-        # x_deep += self.resBlock(x_deep3) + x_deep3
+            x_res = self.resBlock(x_deep)
+            x_deep = x_deep + x_res
+
 
         # 浅层网络
-        x_shallow = self.shallowNet(x)
+        x_shallow = self.shallowNet(x)        
 
         # 特征融合层
         x_DS = x_deep + x_shallow
 
         # 第一次反卷积
-        x_Deconv1 = self.DeConv1(x_DS) + x_2x
+        x_Deconv1 = self.DeConv1(x_DS)
+        x_Deconv1 = x_Deconv1 + x_2x
 
         # 第二次反卷积
-        x_Deconv2 = self.DeConv2(x_Deconv1) + x_4x
+        x_Deconv2 = self.DeConv2(x_Deconv1)
+        x_Deconv2 = x_Deconv2 + x_4x
 
         # 最后一层卷积
         x = self.Finally(x_Deconv2)
 
         x = F.tanh(x)
+        
         return x
 
