@@ -1,5 +1,5 @@
 # 基于 GAN 网络的训练函数
-
+# 文件顺序
 
 # 1.导入必须的包
 import torch
@@ -7,14 +7,16 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from torchvision.transforms import transforms
-import D
-import G
+
+from 
+from ModelD import DNet
+from ModelG import GNet
 
 
-# 2. 搭建网络模型
+# 2. 导入网络模型
 device = ("cuda" if torch.cuda.is_available() else "cpu")
-DNet = D.DNet().to(device)
-GNet = G.GNet().to(device)
+DNet = DNet().to(device)
+GNet = GNet().to(device)
 
 
 # 3. 导入使用的数据集、网络结构、优化器、损失函数等

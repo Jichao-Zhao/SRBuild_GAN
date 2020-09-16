@@ -82,9 +82,3 @@ class GNet(nn.Module):
         x = F.tanh(x)
         return x
 
-
-GNet = GNet()
-print(GNet)
-
-torch.save(GNet.state_dict(), "GNet.pth")
-
