@@ -1,10 +1,17 @@
 # 读取数据函数
-# ''''''''''''''''''''''''''''''dataset.py''''''''''''''''''''''''''''''
-# 数据预处理文件，重中之中，需要手敲一遍
 # 1. 标签处理
 # 2. 标签编码
 # 3. 可视化编码过程
 # 4. 定义预处理类
+
+
+from torch.utils.data import Dataset
+import os
+from PIL import Image
+import CFG
+import torchvision.transforms.functional as ff
+from torchvision.transforms import transforms
+
 
 # 图片数据集处理
 # return：img，label
@@ -32,7 +39,7 @@ class DIV2KDataset(Dataset):
         img = Image.open(img)
         label = Image.open(label)
 
-        img, label = self.center_crop(img, label, crop_size_img, crop_size_label)
+        img, label = self.center_crop(img, label, CFG.crop_size_img, CFG.crop_size_label)
 
         img, label = self.img_transform(img, label)
         # print('处理后的图片和标签大小：',img.shape, label.shape)

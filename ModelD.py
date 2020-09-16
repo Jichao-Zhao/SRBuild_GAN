@@ -22,22 +22,22 @@ class DNet(nn.Module):
         x = F.relu(x)
 
         x = self.conv2(x)
-        x = F.batch_norm(x) # BN 层
+        x = nn.BatchNorm2d(x) # BN 层
         x = F.relu(x)
         x = self.pool1(x)
 
         x = self.conv3(x)
-        x = F.batch_norm(x) # BN 层
+        x = nn.BatchNorm2d(x) # BN 层
         x = F.relu(x)
         x = self.pool2(x)
 
         x = self.conv4(x)
-        x = F.batch_norm(x) # BN 层
+        x = nn.BatchNorm2d(x) # BN 层
         x = F.relu(x)
         x = self.pool3(x)
 
         x = self.conv5(x)
-        x = F.batch_norm(x) # BN 层
+        x = nn.BatchNorm2d(x) # BN 层
         x = F.relu(x)
 
         x = self.conv6(x)
